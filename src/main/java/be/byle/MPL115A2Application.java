@@ -188,6 +188,7 @@ public class MPL115A2Application {
 
     public static void main(String[] args) {
         MPL115A2Application mpl115A2Application = new MPL115A2Application();
+
     }
 
 
