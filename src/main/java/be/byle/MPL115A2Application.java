@@ -85,7 +85,7 @@ public class MPL115A2Application {
             log.debug("Start program");
 
             final GpioController gpio = GpioFactory.getInstance();
-            GpioPinDigitalOutput shutdownPin = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_00,   // PIN NUMBER
+            GpioPinDigitalOutput shutdownPin = gpio.provisionDigitalOutputPin(RaspiPin.GPIO_27,   // PIN NUMBER
                     "shutdown_pin",
                     PinState.HIGH);      // pin in shutdown mode first
             Thread.sleep(5);
