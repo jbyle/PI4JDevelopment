@@ -62,19 +62,21 @@ public class MPL115A2 {
 
         gpio = GpioFactory.getInstance();
         if (shutdownPin==null)
-            shutdownPin = gpio.provisionDigitalOutputPin(gpioShutdownPin,   // PIN NUMBER
+            shutdownPin = gpio.provisionDigitalOutputPin(gpioShutdownPin,
                 "shutdown_pin",
                 PinState.HIGH);
-                    // pin in shutdown mode first
+
         else
             shutdownPin.high();
         Thread.sleep(5);
 
         bus = I2CFactory.getInstance(I2CBus.BUS_1);
-        log.debug("Connected to bus OK!!!");
-        //get device itself
+        if (bus!=null)
+            log.debug("Connected to bus");
+
         mpl115a2 = bus.getDevice(deviceAddress);
-        log.debug("Connected to device OK!!!");
+        if (mpl115a2!=null)
+            log.debug("Connected to device");
 
         mpl115a2.write((byte) 0xC0);
 
@@ -127,6 +129,11 @@ public class MPL115A2 {
 
 public void calculateTempAndPressureReadings() throws IOException, InterruptedException {
 
+    if (shutdownPin!=null) {
+        shutdownPin.high();
+        Thread.sleep(5);
+    }
+
     //Data Conversion
     //   mpl115a2.write(0xC0,convert);
     mpl115a2.write(convert, (byte) padc_MSB_address);
@@ -177,10 +184,15 @@ public void calculateTempAndPressureReadings() throws IOException, InterruptedEx
             e.printStackTrace();
         }
 */
+        try {
+            mpl115A2.init(RaspiPin.GPIO_27);
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
         while(true){
-// write time to line 2 on LCD
             try {
-                mpl115A2.init(RaspiPin.GPIO_27);
                 mpl115A2.calculateTempAndPressureReadings();
             } catch (IOException e) {
                 e.printStackTrace();

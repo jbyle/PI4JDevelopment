@@ -1,8 +1,6 @@
 package be.byle;
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
-import java.text.SimpleDateFormat;
-import java.util.Date;
 import com.pi4j.wiringpi.Gpio;
 import com.pi4j.wiringpi.Lcd;
 import com.pi4j.io.gpio.*;
@@ -49,29 +47,21 @@ public class MPL115A2ToLCD {
             return;
         }
 
-// clear LCD
         Lcd.lcdClear(lcdHandle);
         Thread.sleep(1000);
-// write line 1 to LCD
         Lcd.lcdHome(lcdHandle);
-//Lcd.lcdPosition (lcdHandle, 0, 0) ;
-        Lcd.lcdPuts (lcdHandle, "The Pi4J Project") ;
-// write line 2 to LCD
+        Lcd.lcdPuts (lcdHandle, "Temp/Pressure----");
         Lcd.lcdPosition (lcdHandle, 0, 1) ;
-        Lcd.lcdPuts (lcdHandle, "----------------") ;
-        SimpleDateFormat formatter = new SimpleDateFormat("HH:mm:ss");
-// update time every one second
-/*
+        Lcd.lcdPuts (lcdHandle, "Retrieval-------") ;
+
         try {
             mpl115A2.init(RaspiPin.GPIO_27);
         } catch (IOException e) {
             e.printStackTrace();
         }
-*/
+
         while(true){
-// write time to line 2 on LCD
             try {
-                mpl115A2.init(RaspiPin.GPIO_27);
                 mpl115A2.calculateTempAndPressureReadings();
             } catch (IOException e) {
                 e.printStackTrace();
@@ -80,7 +70,6 @@ public class MPL115A2ToLCD {
             Lcd.lcdHome(lcdHandle);
             Lcd.lcdPuts (lcdHandle, "Temperature-----") ;
             Lcd.lcdPosition (lcdHandle, 0, 1) ;
-//            Lcd.lcdPuts(lcdHandle, "Temperature-----") ;
             if ((new Double(mpl115A2.temperature)).toString().length()>=14)
               Lcd.lcdPuts(lcdHandle, (new Double(mpl115A2.temperature)).toString().substring(0, 14)+" C");
             else
@@ -89,8 +78,6 @@ public class MPL115A2ToLCD {
             Lcd.lcdHome(lcdHandle);
             Lcd.lcdPuts(lcdHandle, "Pressure--------") ;
             Lcd.lcdPosition(lcdHandle, 0, 1) ;
-//            Lcd.lcdPuts(lcdHandle, "Pressure--------") ;
-//            Lcd.lcdPuts (lcdHandle, "Pressure--------") ;
             if ((new Double(mpl115A2.pressure)).toString().length()>=16)
                Lcd.lcdPuts(lcdHandle, (new Double(mpl115A2.pressure)).toString().substring(0, 16));
             else
