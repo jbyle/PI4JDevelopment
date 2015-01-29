@@ -14,7 +14,7 @@ Copyright [2015] [Jan Bylé]
         limitations under the License.
 
 */
-        package be.byle;
+package be.byle;
 
 import com.pi4j.io.gpio.*;
 import com.pi4j.io.i2c.I2CBus;
@@ -27,31 +27,11 @@ import java.io.IOException;
 /**
  * Created by Jan on 24/01/2015.
  */
+// read carefully the datasheet for this sensor.  See http://www.adafruit.com/product/992 for more info on the sensor
 public class MPL115A2 {
 
-    static Logger log = Logger.getLogger(be.byle.MPL115A2.class.getName());
-    I2CBus bus;
-    GpioPinDigitalOutput shutdownPin=null;
-    GpioController gpio=null;
     private static final int deviceAddress = 0x60;
-    private I2CDevice mpl115a2;
-    int padc_MSB;
-    int padc_LSB;
-    int tadc_MSB;
-    int tadc_LSB;
-    int a0_int;
-    int a0_dec;
-    double a0;
-    double b1;
-    double b2;
-    double c12;
-    double tadc;
-    double padc;
-    double pressure;
-    double temperature;
-    double pcomp;
     private static final byte convert = 0x12;
-
     private static final int padc_MSB_address = 0x00;
     private static final int padc_LSB_address = 0x01;
     private static final int tadc_MSB_address = 0x02;
@@ -64,9 +44,26 @@ public class MPL115A2 {
     private static final int b2_LSB_address = 0x09;
     private static final int c12_MSB_address = 0x0A;
     private static final int c12_LSB_address = 0x0B;
+    static Logger log = Logger.getLogger(be.byle.MPL115A2.class.getName());
+    I2CBus bus;
+    GpioPinDigitalOutput shutdownPin = null;
+    GpioController gpio = null;
+    int padc_MSB;
+    int padc_LSB;
+    int tadc_MSB;
+    int tadc_LSB;
+    double a0;
+    double b1;
+    double b2;
+    double c12;
+    double tadc;
+    double padc;
+    double pressure;
+    double temperature;
+    double pcomp;
+    private I2CDevice mpl115a2;
 
-
-    public void init (Pin gpioShutdownPin) throws IOException, InterruptedException {
+    public void init(Pin gpioShutdownPin) throws IOException, InterruptedException {
         int a0_MSB;
         int a0_LSB;
         int b1_MSB;
@@ -77,21 +74,21 @@ public class MPL115A2 {
         int c12_LSB;
 
         gpio = GpioFactory.getInstance();
-        if (shutdownPin==null)
+        if (shutdownPin == null)
             shutdownPin = gpio.provisionDigitalOutputPin(gpioShutdownPin,
-                "shutdown_pin",
-                PinState.HIGH);
+                    "shutdown_pin",
+                    PinState.HIGH);
 
         else
             shutdownPin.high();
         Thread.sleep(5);
 
         bus = I2CFactory.getInstance(I2CBus.BUS_1);
-        if (bus!=null)
+        if (bus != null)
             log.debug("Connected to bus");
 
         mpl115a2 = bus.getDevice(deviceAddress);
-        if (mpl115a2!=null)
+        if (mpl115a2 != null)
             log.debug("Connected to device");
 
         mpl115a2.write((byte) 0xC0);
@@ -143,79 +140,86 @@ public class MPL115A2 {
 
     }
 
-public void calculateTempAndPressureReadings() throws IOException, InterruptedException {
+    public void calculateTempAndPressureReadings() throws IOException, InterruptedException {
 
-    if (shutdownPin!=null) {
-        shutdownPin.high();
+        if (shutdownPin != null) {
+            shutdownPin.high();
+            Thread.sleep(5);
+        }
+
+        //Data Conversion
+        mpl115a2.write(convert, (byte) padc_MSB_address);
+        log.debug("Convert signal sent right now");
         Thread.sleep(5);
+
+        padc_MSB = mpl115a2.read(padc_MSB_address);
+        padc_LSB = mpl115a2.read(padc_LSB_address);
+        padc = (((padc_MSB << 8) | padc_LSB) >> 6);
+
+        log.debug("padc MSB " + padc_MSB);
+        log.debug("padc LSB " + padc_LSB);
+        log.debug("padc " + padc);
+
+        tadc_MSB = mpl115a2.read(tadc_MSB_address);
+        tadc_LSB = mpl115a2.read(tadc_LSB_address);
+        tadc = (((tadc_MSB << 8) | tadc_LSB) >> 6);
+
+        log.debug("tadc core " + tadc);
+        log.debug("tadc MSB " + tadc_MSB);
+        log.debug("tadc LSB " + tadc_LSB);
+
+        pcomp = a0 + (b1 + c12 * tadc) * padc + b2 * tadc;
+
+        log.debug("pcomp : " + pcomp);
+
+        pressure = pcomp * ((115.0 - 50.0) / 1023.0) + 50.0;
+        temperature = (tadc - 498.0) / -5.35 + 25.0;
+
+        log.info("temperature in °C is " + temperature);
+        log.info("pressure : " + pressure);
+
+        if (shutdownPin != null)
+            shutdownPin.low();
+
     }
 
-    //Data Conversion
-    //   mpl115a2.write(0xC0,convert);
-    mpl115a2.write(convert, (byte) padc_MSB_address);
-    log.debug("Convert signal sent right now");
-    //   mpl115a2.write((byte)0xC1);
-    Thread.sleep(5);
-
-    padc_MSB = mpl115a2.read(padc_MSB_address);
-    padc_LSB = mpl115a2.read(padc_LSB_address);
-    padc = (((padc_MSB << 8) | padc_LSB) >> 6);
-
-    log.debug("padc MSB " + padc_MSB);
-    log.debug("padc LSB " + padc_LSB);
-    log.debug("padc " + padc);
-
-    tadc_MSB = mpl115a2.read(tadc_MSB_address);
-    tadc_LSB = mpl115a2.read(tadc_LSB_address);
-    tadc = (((tadc_MSB << 8) | tadc_LSB) >> 6);
-
-    log.debug("tadc core " + tadc);
-    log.debug("tadc MSB " + tadc_MSB);
-    log.debug("tadc LSB " + tadc_LSB);
-
-    pcomp = a0 + (b1 + c12 * tadc) * padc + b2 * tadc;
-
-    log.debug("pcomp : " + pcomp);
-
-    pressure = pcomp * ((115.0 - 50.0) / 1023.0) + 50.0;
-    temperature = (tadc - 498.0) / -5.35 + 25.0;
-
-    log.info("temperature in °C is " + temperature);
-    log.info("pressure : " + pressure);
-
-    if (shutdownPin!=null)
-     shutdownPin.low();
-
-}
-
     public static void main(String[] args) {
+        //quick test program
         MPL115A2 mpl115A2 = new MPL115A2();
 
         try {
             mpl115A2.init(RaspiPin.GPIO_27);
         } catch (IOException e) {
+            log.error(e.getMessage());
             e.printStackTrace();
+            return;
         } catch (InterruptedException e) {
             e.printStackTrace();
+            return;
         }
-        while(true){
+        while (true) {
             try {
                 mpl115A2.calculateTempAndPressureReadings();
             } catch (IOException e) {
+                log.error(e.getMessage());
                 e.printStackTrace();
+                break;
             } catch (InterruptedException e) {
+                log.error(e.getMessage());
                 e.printStackTrace();
+                break;
             }
 
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
+                log.error(e.getMessage());
                 e.printStackTrace();
+                break;
             }
         }
 
 
     }
-
 
 }

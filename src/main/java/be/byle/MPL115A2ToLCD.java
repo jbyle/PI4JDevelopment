@@ -72,15 +72,19 @@ public class MPL115A2ToLCD {
         Lcd.lcdPuts (lcdHandle, "Retrieval-------") ;
 
         try {
+            //initialize the mp1115a2 sensor
             mpl115A2.init(RaspiPin.GPIO_27);
         } catch (IOException e) {
+            log.error(e.getMessage());
             e.printStackTrace();
         }
 
         while(true){
             try {
+                //Do readings
                 mpl115A2.calculateTempAndPressureReadings();
             } catch (IOException e) {
+                log.error(e.getMessage());
                 e.printStackTrace();
             }
 
