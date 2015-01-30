@@ -44,6 +44,8 @@ public class MPL115A2 {
     private static final int b2_LSB_address = 0x09;
     private static final int c12_MSB_address = 0x0A;
     private static final int c12_LSB_address = 0x0B;
+    private static final byte[] convertcommand = {convert, (byte)padc_MSB_address};
+
     static Logger log = Logger.getLogger(be.byle.MPL115A2.class.getName());
     I2CBus bus;
     GpioPinDigitalOutput shutdownPin = null;
@@ -97,29 +99,22 @@ public class MPL115A2 {
         //Read Coefficients
         mpl115a2.write((byte) a0_MSB_address);
         a0_MSB = mpl115a2.read(a0_MSB_address);
-        mpl115a2.write((byte) a0_LSB_address);
         a0_LSB = mpl115a2.read(a0_LSB_address);
 
         a0 = (short) ((a0_MSB << 8) | a0_LSB) / 8.0;
 
-        mpl115a2.write((byte) b1_MSB_address);
         b1_MSB = mpl115a2.read(b1_MSB_address);
-        mpl115a2.write((byte) b1_LSB_address);
         b1_LSB = mpl115a2.read(b1_LSB_address);
 
         b1 = (short) ((b1_MSB << 8) | b1_LSB) / 8192.0;
 
 
-        mpl115a2.write((byte) b2_MSB_address);
         b2_MSB = mpl115a2.read(b2_MSB_address);
-        mpl115a2.write((byte) b2_LSB_address);
         b2_LSB = mpl115a2.read(b2_LSB_address);
 
         b2 = (short) ((b2_MSB << 8) | b2_LSB) / 16384.0;
 
-        mpl115a2.write((byte) c12_MSB_address);
         c12_MSB = mpl115a2.read(c12_MSB_address);
-        mpl115a2.write((byte) c12_LSB_address);
         c12_LSB = mpl115a2.read(c12_LSB_address);
 
         c12 = (short) (((c12_MSB << 8) | c12_LSB) >> 2) / 4194304.0;
@@ -148,7 +143,8 @@ public class MPL115A2 {
         }
 
         //Data Conversion
-        mpl115a2.write(convert, (byte) padc_MSB_address);
+        mpl115a2.write(convertcommand,0,2);
+
         log.debug("Convert signal sent right now");
         Thread.sleep(5);
 
