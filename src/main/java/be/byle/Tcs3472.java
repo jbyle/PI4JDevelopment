@@ -31,7 +31,7 @@ public class TCS3472 {
 
 
     private static final int device_address = 0x29;
-    private static final int COMMAND_MS3Bits = 0xa0;
+    private static final int COMMAND_MS3Bits = 0xA0;
     private static final byte enable_pon = 0x01;
     private static final byte enable_AEN = 0x02;
 
@@ -64,8 +64,8 @@ public class TCS3472 {
         tcs3472=I2CTools.getDevice(device_address, I2CBus.BUS_1);
         //set ATime
         tcs3472.write((byte) (ATIME_address | COMMAND_MS3Bits));
-        tcs3472.write((byte) (0x10));
-        Thread.sleep(100);
+        tcs3472.write((byte) (0x00));
+        Thread.sleep(5);
 
         //set WTime
 
@@ -74,12 +74,12 @@ public class TCS3472 {
         //set GAIN
         tcs3472.write((byte) (CONTROL_address | COMMAND_MS3Bits));
         tcs3472.write((byte) 0x00);
-        Thread.sleep(100);
+        Thread.sleep(5);
 
 
         tcs3472.write((byte) (CONFIG_address | COMMAND_MS3Bits));
         tcs3472.write((byte) 0x00);
-        Thread.sleep(100);
+        Thread.sleep(5);
 
 
 
@@ -91,19 +91,28 @@ public class TCS3472 {
     void startColorCalculation() throws IOException, InterruptedException {
         tcs3472.write((byte) (ENABLE_address | COMMAND_MS3Bits));
         tcs3472.write((byte)(enable_pon|enable_AEN));
-        Thread.sleep(100);
+        Thread.sleep(700);
     }
+
+    void endColorCalculation() throws IOException, InterruptedException {
+        tcs3472.write((byte) (ENABLE_address | COMMAND_MS3Bits));
+        tcs3472.write((byte)(0x00));
+    }
+
 
     byte[] readData() throws  IOException, InterruptedException {
         byte[] inputBuffer = new byte[8];
         tcs3472.write((byte)(CDATAL_address|COMMAND_MS3Bits));
         Thread.sleep(100);
-        tcs3472.read(inputBuffer,0,8);
-/*        tcs3472.write((byte)(RDATAL_address|COMMAND_MS3Bits));
-        tcs3472.read(inputBuffer,2,2);
-        tcs3472.write((byte)(GDATAL_address|COMMAND_MS3Bits));
-        tcs3472.read(inputBuffer,4,2);
-        tcs3472.write((byte)(BDATAL_address|COMMAND_MS3Bits));
+        tcs3472.read(inputBuffer, 0, 8);
+ /*       tcs3472.write((byte) (RDATAL_address | COMMAND_MS3Bits));
+        Thread.sleep(100);
+        tcs3472.read(inputBuffer, 2, 2);
+        tcs3472.write((byte) (GDATAL_address | COMMAND_MS3Bits));
+        Thread.sleep(100);
+        tcs3472.read(inputBuffer, 4, 2);
+        tcs3472.write((byte) (BDATAL_address | COMMAND_MS3Bits));
+        Thread.sleep(100);
         tcs3472.read(inputBuffer,6,2);*/
         return inputBuffer;
     }
@@ -116,15 +125,19 @@ public class TCS3472 {
         setup();
         startColorCalculation();
         colorInputBuffer=readData();
-        for (int i=0;i<8;i++)
-            castedColorInputBuffer[i]=(int)colorInputBuffer[i];
+        endColorCalculation();
+        for (int i=0;i<8;i++) {
+            log.info("colors read " + colorInputBuffer[i]);
+            castedColorInputBuffer[i] =  (colorInputBuffer[i])&0xFF;
+        }
         for (int i=0;i<4;i++) {
-            log.info(castedColorInputBuffer[2*i]);
-            log.info(castedColorInputBuffer[2*i+1]);
-            l=castedColorInputBuffer[2*i]&0xFF;
+            l=castedColorInputBuffer[2*i];
             h=castedColorInputBuffer[2*i+1];
-            returnValues[i] = (h << 8) | l;
-            log.info("result[" + i + "] : " + returnValues[i]);
+            log.info("low : " +l);
+            log.info("high :" +h);
+            returnValues[i] =( (h << 8) | l);
+            log.info("raw data result[" + i + "] : " + (returnValues[i]));
+            log.info("rgb result[" + i + "]      : " + (returnValues[i]>>>8));
         }
         return returnValues;
     }
