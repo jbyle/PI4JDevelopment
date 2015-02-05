@@ -26,8 +26,8 @@ import java.io.IOException;
 /**
  * Created by Jan Bylé on 31/01/2015.
  */
-public class TCS3472 {
-    static Logger log = Logger.getLogger(be.byle.TCS3472.class.getName());
+public class TCS3472b {
+    static Logger log = Logger.getLogger(TCS3472b.class.getName());
 
 
     private static final int device_address = 0x29;
@@ -64,7 +64,7 @@ public class TCS3472 {
         tcs3472=I2CTools.getDevice(device_address, I2CBus.BUS_1);
         //set ATime
         tcs3472.write((byte) (ATIME_address | COMMAND_MS3Bits));
-        tcs3472.write((byte) (0x00));
+        tcs3472.write((byte) (0x01));
         Thread.sleep(5);
 
         //set WTime
@@ -138,12 +138,13 @@ public class TCS3472 {
             returnValues[i] =( (h << 8) | l);
             log.info("raw data result[" + i + "] : " + (returnValues[i]));
             log.info("rgb result[" + i + "]      : " + (returnValues[i]>>>8));
+            log.info("clear rgb result[" + i + "]      : " + (double)(returnValues[i])/(double)returnValues[0]*255);
         }
         return returnValues;
     }
     public static void main(String[] args) {
         int results[];
-        TCS3472 tcs34721 = new TCS3472();
+        TCS3472b tcs34721 = new TCS3472b();
         try {
             results=tcs34721.initiateAndGetColor();
         } catch (IOException e) {
