@@ -34,6 +34,9 @@ public class TCS3472 {
     private static final int COMMAND_MS3Bits = 0xA0;
     private static final byte enable_pon = 0x01;
     private static final byte enable_AEN = 0x02;
+    private static final byte ATIME = (byte)0xD5;
+    private static final byte GAIN = 0x00;
+    private static final byte WLONG = 0x00;
 
     private static final int ENABLE_address = 0x00;
     private static final int ATIME_address = 0x01;
@@ -57,100 +60,76 @@ public class TCS3472 {
     private static final int BDATAH_address = 0x1B;
 
     private I2CDevice tcs3472;
-    private byte[] colorInputBuffer = new byte[8];
-
 
     void setup() throws IOException, InterruptedException {
         tcs3472=I2CTools.getDevice(device_address, I2CBus.BUS_1);
         //set ATime
         tcs3472.write((byte) (ATIME_address | COMMAND_MS3Bits));
-        tcs3472.write((byte) (0x01));
+        tcs3472.write(ATIME);
         Thread.sleep(5);
 
-        //set WTime
-
         //set WLONG
+        tcs3472.write((byte) (CONFIG_address | COMMAND_MS3Bits));
+        tcs3472.write(WLONG);
+        Thread.sleep(5);
 
         //set GAIN
         tcs3472.write((byte) (CONTROL_address | COMMAND_MS3Bits));
-        tcs3472.write((byte) 0x00);
+        tcs3472.write((byte) GAIN);
         Thread.sleep(5);
-
-
-        tcs3472.write((byte) (CONFIG_address | COMMAND_MS3Bits));
-        tcs3472.write((byte) 0x00);
-        Thread.sleep(5);
-
-
-
-
-        //set ID
-
     }
 
-    void startColorCalculation() throws IOException, InterruptedException {
+    void sensorStart() throws IOException, InterruptedException {
         tcs3472.write((byte) (ENABLE_address | COMMAND_MS3Bits));
         tcs3472.write((byte)(enable_pon|enable_AEN));
-        Thread.sleep(700);
+        Thread.sleep(900);
     }
 
-    void endColorCalculation() throws IOException, InterruptedException {
+    void sensorStop() throws IOException, InterruptedException {
         tcs3472.write((byte) (ENABLE_address | COMMAND_MS3Bits));
         tcs3472.write((byte)(0x00));
     }
 
 
-    byte[] readData() throws  IOException, InterruptedException {
+    byte[] readRawData() throws  IOException, InterruptedException {
         byte[] inputBuffer = new byte[8];
         tcs3472.write((byte)(CDATAL_address|COMMAND_MS3Bits));
         Thread.sleep(100);
+        // read 8 bytes (low+ high byte for clear, red, green and blue
         tcs3472.read(inputBuffer, 0, 8);
- /*       tcs3472.write((byte) (RDATAL_address | COMMAND_MS3Bits));
-        Thread.sleep(100);
-        tcs3472.read(inputBuffer, 2, 2);
-        tcs3472.write((byte) (GDATAL_address | COMMAND_MS3Bits));
-        Thread.sleep(100);
-        tcs3472.read(inputBuffer, 4, 2);
-        tcs3472.write((byte) (BDATAL_address | COMMAND_MS3Bits));
-        Thread.sleep(100);
-        tcs3472.read(inputBuffer,6,2);*/
         return inputBuffer;
     }
 
-    int[] initiateAndGetColor() throws  IOException, InterruptedException {
+    int[] channelConversion(byte[] rawData){
+        int[] channelValues = new int[4];
+        for (int i=0;i<4;i++)
+            // first byte is low byte, second byte is high byte
+            channelValues[i]=((rawData[2*i+1]&0xFF)<<8)|(rawData[2*i]&0xFF);
+
+        return channelValues;
+    }
+
+    void getColor() throws  IOException, InterruptedException {
         int returnValues[]= new int[4];
-        int castedColorInputBuffer[] = new int[8];
-        int l=0;
-        int h=0;
-        setup();
-        startColorCalculation();
-        colorInputBuffer=readData();
-        endColorCalculation();
-        for (int i=0;i<8;i++) {
-            log.info("colors read " + colorInputBuffer[i]);
-            castedColorInputBuffer[i] =  (colorInputBuffer[i])&0xFF;
-        }
-        for (int i=0;i<4;i++) {
-            l=castedColorInputBuffer[2*i];
-            h=castedColorInputBuffer[2*i+1];
-            log.info("low : " +l);
-            log.info("high :" +h);
-            returnValues[i] =( (h << 8) | l);
-            log.info("raw data result[" + i + "] : " + (returnValues[i]));
-            log.info("rgb result[" + i + "]      : " + (returnValues[i]>>>8));
-            log.info("clear rgb result[" + i + "]      : " + (double)(returnValues[i])/(double)returnValues[0]*255);
-        }
-        return returnValues;
+        sensorStart();
+        returnValues=channelConversion(readRawData());
+        sensorStop();
+        log.info("raw data results : " + (returnValues[0])+" " + (returnValues[1])+" " + (returnValues[2])+" " + (returnValues[3]));
     }
     public static void main(String[] args) {
-        int results[];
         TCS3472 tcs34721 = new TCS3472();
         try {
-            results=tcs34721.initiateAndGetColor();
-        } catch (IOException e) {
-            e.printStackTrace();
-        } catch (InterruptedException e) {
-            e.printStackTrace();
+            tcs34721.setup();
+        } catch (Exception e) {
+            log.error(e.getMessage());
+        }
+        while (true) {
+            try {
+                tcs34721.getColor();
+            } catch (Exception e) {
+                log.error(e.getMessage());
+                break;
+            }
         }
     }
 
