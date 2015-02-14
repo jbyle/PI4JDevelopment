@@ -26,8 +26,8 @@ import java.io.IOException;
 /**
  * Created by Jan Bylé on 31/01/2015.
  */
-public class TCS3472 {
-    static Logger log = Logger.getLogger(TCS3472.class.getName());
+public class TCS34725 {
+    static Logger log = Logger.getLogger(TCS34725.class.getName());
 
 
     private static final int device_address = 0x29;
@@ -117,7 +117,7 @@ public class TCS3472 {
         log.info("raw data results : " + (returnValues[0])+" " + (returnValues[1])+" " + (returnValues[2])+" " + (returnValues[3]));
     }
     public static void main(String[] args) {
-        TCS3472 tcs34721 = new TCS3472();
+        TCS34725 tcs34721 = new TCS34725();
         try {
             tcs34721.setup();
         } catch (Exception e) {
