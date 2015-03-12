@@ -19,6 +19,7 @@ package be.byle;
 import be.byle.utility.I2CTools;
 import com.pi4j.io.i2c.I2CBus;
 import com.pi4j.io.i2c.I2CDevice;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -26,6 +27,7 @@ import java.io.IOException;
  * Created by Jan Bylé on 21/02/2015.
  */
 public class HMC5883L {
+    static Logger log = Logger.getLogger(HMC5883L.class.getName());
 
     private static final int device_address = 0x1E;
 
@@ -67,14 +69,41 @@ public class HMC5883L {
 
     byte[] readRawData() throws  IOException, InterruptedException {
         byte[] inputBuffer = new byte[6];
-        hmc5883L.write((byte)X_MSB_REGISTER_address);
+        hmc5883L.write((byte) X_MSB_REGISTER_address);
         Thread.sleep(67);
         // read 6 bytes (low+ high byte for X, Y and Z
         hmc5883L.read(inputBuffer, 0, 6);
         return inputBuffer;
     }
 
+    void doAxisReadings() throws  IOException, InterruptedException {
+        int returnValues[]= new int[3];
+       returnValues=valueConversion(readRawData());
+        log.info("X " + (returnValues[0])+" Z" + (returnValues[1])+"Y " + (returnValues[2]));
+    }
+
+
+    int[] valueConversion(byte[] rawData){
+        int[] channelValues = new int[3];
+        for (int i=0;i<3;i++)
+            // first byte is low byte, second byte is high byte
+            channelValues[i]=((rawData[2*i+1]&0xFF)<<8)|(rawData[2*i]&0xFF);
+
+        return channelValues;
+    }
     public static void main(String[] args) {
+        HMC5883L hmc5883L1 = new HMC5883L();
+        try {
+            hmc5883L1.setup();
+            while (true) {
+                hmc5883L1.doAxisReadings();
+                Thread.sleep(67);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
     }
 
 
