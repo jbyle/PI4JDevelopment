@@ -32,25 +32,25 @@ import static java.lang.Math.atan2;
 public class HMC5883L {
     static Logger log = Logger.getLogger(HMC5883L.class.getName());
 
-    private static final int device_address = 0x1E;
+    private static final byte device_address = (byte)0x1E;
 
-    private static final int CONFIG_REGISTER_A_address      = 0x00;
-    private static final int CONFIG_REGISTER_B_address      = 0x01;
-    private static final int MODE_REGISTER_address          = 0x02;
-    private static final int X_MSB_REGISTER_address         = 0x03;
-    private static final int X_LSB_REGISTER_address         = 0x04;
-    private static final int Z_MSB_REGISTER_address         = 0x05;
-    private static final int Z_LSB_REGISTER_address         = 0x06;
-    private static final int Y_MSB_REGISTER_address         = 0x07;
-    private static final int Y_LSB_REGISTER_address         = 0x08;
-    private static final int STATUS_REGISTER_address        = 0x09;
-    private static final int IDENT_REGISTER_A_address       = 0x0A;
-    private static final int IDENT_REGISTER_B_address       = 0x0B;
-    private static final int IDENT_REGISTER_C_address       = 0x0C;
+    private static final byte CONFIG_REGISTER_A_address      = (byte)0x00;
+    private static final byte CONFIG_REGISTER_B_address      = (byte)0x01;
+    private static final byte MODE_REGISTER_address          = (byte)0x02;
+    private static final byte X_MSB_REGISTER_address         = (byte)0x03;
+    private static final byte X_LSB_REGISTER_address         = (byte)0x04;
+    private static final byte Z_MSB_REGISTER_address         = (byte)0x05;
+    private static final byte Z_LSB_REGISTER_address         = (byte)0x06;
+    private static final byte Y_MSB_REGISTER_address         = (byte)0x07;
+    private static final byte Y_LSB_REGISTER_address         = (byte)0x08;
+    private static final byte STATUS_REGISTER_address        = (byte)0x09;
+    private static final byte IDENT_REGISTER_A_address       = (byte)0x0A;
+    private static final byte IDENT_REGISTER_B_address       = (byte)0x0B;
+    private static final byte IDENT_REGISTER_C_address       = (byte)0x0C;
 
-    private static final int configA   = 0x70;
-    private static final int configB   = 0xA0;
-    private static final int mode      = 0x00;
+    private static final byte configA   = (byte)0x70;
+    private static final byte configB   = (byte)0xA0;
+    private static final byte mode      = (byte)0x00;
 
 
 
@@ -60,41 +60,43 @@ public class HMC5883L {
 
     void setup() throws IOException, InterruptedException {
         hmc5883L = I2CTools.getDevice(device_address, I2CBus.BUS_1);
-   //     hmc5883L.write((byte) 0x3C);
-        hmc5883L.write((byte) CONFIG_REGISTER_A_address);
-        hmc5883L.write((byte) configA);
-     //   hmc5883L.write((byte) 0x3C);
-        hmc5883L.write((byte) CONFIG_REGISTER_B_address);
-        hmc5883L.write((byte) configB);
-     //   hmc5883L.write((byte) 0x3C);
-        hmc5883L.write((byte) MODE_REGISTER_address);
-        hmc5883L.write((byte) mode);
-  //      Thread.sleep(670);
+        hmc5883L.write((byte)0x3C,CONFIG_REGISTER_A_address);
+        hmc5883L.write(CONFIG_REGISTER_A_address,configA);
+        hmc5883L.write(CONFIG_REGISTER_B_address,configB);
+        hmc5883L.write(MODE_REGISTER_address,mode);
+        log.info("initialized");
+        System.out.println("config a " + hmc5883L.read(CONFIG_REGISTER_A_address));
+        System.out.println("config b " + hmc5883L.read(CONFIG_REGISTER_B_address));
+
+        //      Thread.sleep(670);
     }
 
 
     byte[] readRawData() throws  IOException, InterruptedException {
         byte[] inputBuffer = new byte[6];
  //       hmc5883L.write((byte) device_address);
-        hmc5883L.write((byte) 0x3D);
-        hmc5883L.write((byte) 0x06);
+  //      hmc5883L.write((byte)0x3D);
+    //    hmc5883L.write((byte) 0x06);
     //    hmc5883L.write((byte) 0x3C);
       //  hmc5883L.write((byte) X_MSB_REGISTER_address);
         //Thread.sleep(67);
   //      hmc5883L.write((byte) X_MSB_REGISTER_address);
         // read 6 bytes (low+ high byte for X, Y and Z
  //       hmc5883L.read(inputBuffer, 0, 6);
+  //      hmc5883L.write((byte) 0x03);
         inputBuffer[0]=(byte)hmc5883L.read(0x03);
         inputBuffer[1]=(byte)hmc5883L.read(0x04);
         inputBuffer[2]=(byte)hmc5883L.read(0x05);
         inputBuffer[3]=(byte)hmc5883L.read(0x06);
         inputBuffer[4]=(byte)hmc5883L.read(0x07);
         inputBuffer[5]=(byte)hmc5883L.read(0x08);
-        hmc5883L.write((byte) 0x3C);
-        hmc5883L.write((byte) X_MSB_REGISTER_address);
+//        hmc5883L.write((byte) 0x3C);
+  //      hmc5883L.write((byte) X_MSB_REGISTER_address);
         for (int i=0;i<6;i++)
             log.info(inputBuffer[i]);
          return inputBuffer;
+
+
     }
 
     void doAxisReadings() throws  IOException, InterruptedException {
