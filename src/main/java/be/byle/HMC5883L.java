@@ -109,31 +109,34 @@ public class HMC5883L {
         angle= atan2((double)returnValues[2],(double)returnValues[0]) * (180 / 3.14159265);
 
         if (y>0)
-                angle = 90 - atan(x/y)*180/3.14159265;
+                angle = 90 - atan(x/y)*180/Math.PI;
         else if (y<0)
-            angle = 270-atan(x/y)*180/3.14159265;
+            angle = 270-atan(x/y)*180/Math.PI;
         else if ((y==0)&&(x<0))
             angle = 180;
         else if ((y==0)&&(x>0))
             angle = 0;
 
+        if (angle<0)
+            angle+=360;
+
         log.info("angle : "+angle);
         if((angle < 22.5) || (angle > 337.5 ))
-            log.info("South");
-        if((angle > 22.5) && (angle < 67.5 ))
-            log.info("South-West");
-        if((angle > 67.5) && (angle < 112.5 ))
-            log.info("West");
-        if((angle > 112.5) && (angle < 157.5 ))
-            log.info("North-West");
-        if((angle > 157.5) && (angle < 202.5 ))
             log.info("North");
-        if((angle > 202.5) && (angle < 247.5 ))
-            log.info("NorthEast");
-        if((angle > 247.5) && (angle < 292.5 ))
+        if((angle > 22.5) && (angle < 67.5 ))
+            log.info("North-East");
+        if((angle > 67.5) && (angle < 112.5 ))
             log.info("East");
+        if((angle > 112.5) && (angle < 157.5 ))
+            log.info("South-East");
+        if((angle > 157.5) && (angle < 202.5 ))
+            log.info("South");
+        if((angle > 202.5) && (angle < 247.5 ))
+            log.info("South West");
+        if((angle > 247.5) && (angle < 292.5 ))
+            log.info("West");
         if((angle > 292.5) && (angle < 337.5 ))
-            log.info("SouthEast");
+            log.info("North West");
 
     }
 
@@ -142,7 +145,7 @@ public class HMC5883L {
         int[] channelValues = new int[3];
         for (int i=0;i<3;i++){
             // first byte is low byte, second byte is high byte
-            channelValues[i]=((rawData[2*i])<<8)|(rawData[2*i+1]);
+            channelValues[i]=((rawData[2*i])<<8)|(rawData[2*i+1]&0xFF);
         }
 
 
@@ -155,7 +158,7 @@ public class HMC5883L {
             while (true) {
                 hmc5883L1.doAxisReadings();
               // hmc5883L1.readRawData();
-                Thread.sleep(670);
+                Thread.sleep(1500);
             }
         } catch (IOException e) {
             e.printStackTrace();
