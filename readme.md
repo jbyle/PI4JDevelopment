@@ -2,3 +2,4 @@ This repository contains sourcecode for reading values from different sensors us
 *MPL115A2
 *TCS34725
 *16x2 Character Display -> showing values from MPL115A2
+*HMC5883L
