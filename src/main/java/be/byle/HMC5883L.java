@@ -48,9 +48,9 @@ public class HMC5883L {
     private static final byte IDENT_REGISTER_B_address       = (byte)0x0B;
     private static final byte IDENT_REGISTER_C_address       = (byte)0x0C;
 
-    private static final byte configA   = (byte)0x70;
-    private static final byte configB   = (byte)0xA0;
-    private static final byte mode      = (byte)0x00;
+    private static final byte configA   = (byte)0x70;  //8 average, 15 Hz default, normal measurement
+    private static final byte configB   = (byte)0xA0;  // Gain = 5
+    private static final byte mode      = (byte)0x00;  //Continuous measurement mode
 
 
 
@@ -68,30 +68,20 @@ public class HMC5883L {
         System.out.println("config a " + hmc5883L.read(CONFIG_REGISTER_A_address));
         System.out.println("config b " + hmc5883L.read(CONFIG_REGISTER_B_address));
 
-        //      Thread.sleep(670);
     }
 
 
     byte[] readRawData() throws  IOException, InterruptedException {
         byte[] inputBuffer = new byte[6];
- //       hmc5883L.write((byte) device_address);
-  //      hmc5883L.write((byte)0x3D);
-    //    hmc5883L.write((byte) 0x06);
-    //    hmc5883L.write((byte) 0x3C);
-      //  hmc5883L.write((byte) X_MSB_REGISTER_address);
-        //Thread.sleep(67);
-  //      hmc5883L.write((byte) X_MSB_REGISTER_address);
         // read 6 bytes (low+ high byte for X, Y and Z
- //       hmc5883L.read(inputBuffer, 0, 6);
-  //      hmc5883L.write((byte) 0x03);
-        inputBuffer[0]=(byte)hmc5883L.read(0x03);
+        hmc5883L.write((byte) X_MSB_REGISTER_address);
+        hmc5883L.read(inputBuffer, 0, 6);
+ /*       inputBuffer[0]=(byte)hmc5883L.read(0x03);
         inputBuffer[1]=(byte)hmc5883L.read(0x04);
         inputBuffer[2]=(byte)hmc5883L.read(0x05);
         inputBuffer[3]=(byte)hmc5883L.read(0x06);
         inputBuffer[4]=(byte)hmc5883L.read(0x07);
-        inputBuffer[5]=(byte)hmc5883L.read(0x08);
-//        hmc5883L.write((byte) 0x3C);
-  //      hmc5883L.write((byte) X_MSB_REGISTER_address);
+        inputBuffer[5]=(byte)hmc5883L.read(0x08);*/
         for (int i=0;i<6;i++)
             log.info(inputBuffer[i]);
          return inputBuffer;
@@ -105,7 +95,7 @@ public class HMC5883L {
         int x = returnValues[0];
         int y = returnValues[2];
        returnValues=valueConversion(readRawData());
-        log.info("X " + (returnValues[0])+" Z" + (returnValues[1])+"Y " + (returnValues[2]));
+        log.info("X :" + (returnValues[0])+" Z :" + (returnValues[1])+"Y :" + (returnValues[2]));
         angle= atan2((double)returnValues[2],(double)returnValues[0]) * (180 / 3.14159265);
 
         if (y>0)
@@ -157,7 +147,6 @@ public class HMC5883L {
             hmc5883L1.setup();
             while (true) {
                 hmc5883L1.doAxisReadings();
-              // hmc5883L1.readRawData();
                 Thread.sleep(1500);
             }
         } catch (IOException e) {
